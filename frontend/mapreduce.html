@@ -1,0 +1,60 @@
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+  <head>
+
+  </head>
+
+  <body onload="work()">
+    <h3 id="metaData"></h3>
+    <h3>Data : </h3>
+    <div id="data"></div>
+    <h3>Result </h3>
+    <div id="result"></div>
+  </body>
+
+  <script type="text/javascript">
+    var url = "http://localhost:8080"
+    function map(data) {
+      /* count the number of words in the body of document */
+      var mapped = new Map();
+      for(var word of data.split(" ")) {
+        console.log(word)
+        if(!mapped.get(word)) {
+            mapped.set(word, ["1"]);
+        }
+        else {
+          mapped.get(word).push("1");
+        }
+      }
+      return mapped;
+    }
+
+    function reduce(data) {
+      /* sum up all the word counts */
+      var l = JSON.parse(data);
+      var reduced = new Map();
+      for(var entry of l) {
+        reduced.set(entry[0], entry[1].length);
+      }
+      return reduced;
+    }
+
+    function work() {
+      $.get( url+"/work", function( data ) {
+        $("#data").html(data.rawData);
+        $("#metaData").html("Job : "+data.job);
+        var treatedData;
+        if(data.job == "map") {
+          treatedData = map(data.rawData);
+        }
+        else if(data.job == "reduce") {
+          treatedData = reduce(data.rawData);
+        }
+        console.log(treatedData);
+        $("#result").html(JSON.stringify([...treatedData]));
+        $.post(url+"/jobDone", {rawData:JSON.stringify([...treatedData]), job:data.job, dataId:data.dataId});
+    });
+    }
+  </script>
+</html>
