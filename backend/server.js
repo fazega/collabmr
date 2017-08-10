@@ -5,6 +5,8 @@ var jobs = require('./jobs')
 
 var app = express();
 
+
+
 var bodyParser = require('body-parser')
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
@@ -44,9 +46,12 @@ app.use(function(req, res, next){
 });
 
 app.listen(8080);
+console.log("Server started. Waiting for connections.")
 
-fs.readFile('files/data1.txt', 'utf8', function(err, data) {
-  console.log(data);
+
+console.log("Loading data ...");
+fs.readFile('files/bible.txt', 'utf8', function(err, data) {
   if (err) throw err;
   jobs.split(data);
 });
+console.log("Data read.")

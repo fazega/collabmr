@@ -7,7 +7,7 @@
 
   <body onload="work()">
     <h3 id="metaData"></h3>
-    <h3>Data : </h3>
+    <h3>Data size : </h3>
     <div id="data"></div>
     <h3>Result </h3>
     <div id="result"></div>
@@ -19,15 +19,16 @@
       /* count the number of words in the body of document */
       var mapped = new Map();
       for(var word of data.split(" ")) {
-        console.log(word)
-        if(!mapped.get(word)) {
-            mapped.set(word, ["1"]);
-        }
-        else {
-          mapped.get(word).push("1");
+        if(word == "Love") {
+          if(!mapped.get(word)) {
+              mapped.set(word, ["1"]);
+          }
+          else {
+            mapped.get(word).push("1");
+          }
         }
       }
-      return mapped;
+      return JSON.stringify([...mapped]);
     }
 
     function reduce(data) {
@@ -37,23 +38,34 @@
       for(var entry of l) {
         reduced.set(entry[0], entry[1].length);
       }
-      return reduced;
+      return JSON.stringify([...reduced]);
     }
 
+    var attemptCount = 0;
     function work() {
       $.get( url+"/work", function( data ) {
-        $("#data").html(data.rawData);
-        $("#metaData").html("Job : "+data.job);
-        var treatedData;
-        if(data.job == "map") {
-          treatedData = map(data.rawData);
+        if(data != "") {
+          attemptCount = 0;
+          $("#data").html(data.rawData.length);
+          $("#metaData").html("Job : "+data.job);
+          var treatedData;
+          if(data.job == "map") {
+            treatedData = map(data.rawData);
+          }
+          else if(data.job == "reduce") {
+            treatedData = reduce(data.rawData);
+          }
+          console.log(treatedData);
+          $("#result").html(treatedData);
+          $.post(url+"/jobDone", {rawData:treatedData, job:data.job, dataId:data.dataId});
+          work();
         }
-        else if(data.job == "reduce") {
-          treatedData = reduce(data.rawData);
+        else {
+          attemptCount++;
+          $("#metaData").html("No work to do for now ... Attempt : "+attemptCount);
+          setTimeout(function() {work()}, 1000);
         }
-        console.log(treatedData);
-        $("#result").html(JSON.stringify([...treatedData]));
-        $.post(url+"/jobDone", {rawData:JSON.stringify([...treatedData]), job:data.job, dataId:data.dataId});
+
     });
     }
   </script>
