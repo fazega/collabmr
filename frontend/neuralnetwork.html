@@ -96,6 +96,36 @@ function randInitializeWeights(layers){
 	
 }
 
+function roll_params(nn_params, layers){
+    
+    num_layers = layers.length;
+    Theta = [];
+    index = 0;
+	for(i = 0; i < num_layers - 1; i++){
+		step = layers[i+1]*(layers[i]+1);
+		weights = math.matrix(math.subset(nn_params,math.index(math.range(index,index+step))));
+		math.reshape(weights,[layers[i+1],layers[i]+1]);
+		index = index + step;
+		Theta.push(weights);
+	}
+	
+	return Theta;
+}
+
+function unroll_params(Theta){
+	var nn_params = [];
+    for(i = 0 ; i<Theta.length; i++){
+		for(k = 0; k<Theta[i].size()[0]; k++){
+			for(l = 0; l<Theta[i].size()[1]; l++){
+				nn_params.push(Theta[i]._data[k][l]);
+			}
+		}
+	}
+	//console.log("unroll param");
+	//console.log(nn_params);
+    return nn_params;
+}
+
 function sigmoidGradient(z){
 	//console.log("gradient");
 	//console.log(z);
@@ -228,6 +258,24 @@ function train(nb_epochs,eta,Theta,layers,X,y,num_labels,lambd,early_stopping){
 	return Theta;
 }
 
+function train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd){
+	
+	var Theta_grad;
+	Theta_grad = backwards2(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
+	return Theta_grad;
+}
+function work_asynchrone(){
+	//get from the server nn_weights, minibatch data et labels, layers (liste : élément i = nombre de neurones sur la couche i)
+	
+	var Theta = roll_params(nn_weights, layers);
+	var num_labels = layers[layers.length - 1];
+	var lambd = 3.0; //set your regularization param
+	var res = train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
+	var Theta_grad_unrolled = unroll_params(res);
+	//post request sending Theta_grad_unrolled to the server
+}
+
+
 // MAIN :
 //Reading of the dataset
 // You are free to reduce the number of samples retained for training, in order to reduce the computational cost
@@ -287,7 +335,7 @@ var pred  = predict(ThetaRes, math.matrix(images_test));
 var accuracy = 0.0;
 
 console.log(pred);
-for(w = 0; w<size_test;w++){
+for(var w = 0; w< labels_test.length;w++){
 	if(pred[w] == labels_test[w].indexOf(1)){
 		accuracy += 1.0;
 		
