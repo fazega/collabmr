@@ -19,8 +19,8 @@ function work() {
 
         $.post(url+"/jobDone", JSON.parse(JSON.stringify(x)));
         sleep(500).then(() => {
-    work();
-});
+            work();
+        });
 
       }
       else {

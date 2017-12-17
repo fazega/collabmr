@@ -239,9 +239,7 @@ function train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_label
 	return Theta_grad;
 }
 
-function getRandomMinibatch() {
-	var size_training = 10;
-
+function getRandomMinibatch(size_training) {
 	var read = read_dataset(size_training, 0);
 	var images_training = [];
 	var labels_training= [];
@@ -257,6 +255,22 @@ function getRandomMinibatch() {
 	return [X,Y]
 }
 
+function getAccuracy(weights) {
+	var minibatch = getRandomMinibatch(100);
+	var minibatch_data = minibatch[0];
+	var minibatch_labels = minibatch[1];
+
+	var pred  = predict(weights, minibatch_data);
+	var accuracy = 0.0;
+
+	for(var w = 0; w< minibatch_labels._data.length;w++){
+		if(pred[w] == minibatch_labels._data[w].indexOf(1)){
+			accuracy += 1.0;
+		}
+	}
+	return accuracy;
+}
+
 function gradientFromWeights(weights) {
   var layers = []
   for(var i = 0; i < weights.length; i++) {
@@ -269,7 +283,9 @@ function gradientFromWeights(weights) {
 		var M = math.matrix(weights[i].data);
 		Theta.push(M)
 	}
-	var minibatch = getRandomMinibatch();
+	console.log("Accuracy : "+getAccuracy(Theta));
+
+	var minibatch = getRandomMinibatch(100);
 	var minibatch_data = minibatch[0];
 	var minibatch_labels = minibatch[1];
   var num_labels = layers[layers.length - 1];
