@@ -1,6 +1,13 @@
-var imported = document.createElement('script');
+/*var imported = document.createElement('script');
 imported.src = "math.min.js";
-document.head.appendChild(imported);
+document.head.insertBefore(imported, document.head.children[0]);
+
+var imported2 = document.createElement('script');
+imported2.src = "bower_components/mnist/dist/mnist.js";
+document.head.insertBefore(imported2, document.head.children[0]);*/
+
+
+
 
 
 function read_dataset(size_training, size_testing){
@@ -84,7 +91,7 @@ function unroll_params(Theta){
     for(i = 0 ; i<Theta.length; i++){
 		for(k = 0; k<Theta[i].size()[0]; k++){
 			for(l = 0; l<Theta[i].size()[1]; l++){
-				nn_params.push(Theta[i]._data[k][l]);
+				nn_params.push(Math.round(Theta[i]._data[k][l] * 100) / 100);
 			}
 		}
 	}
@@ -232,20 +239,64 @@ function train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_label
 	return Theta_grad;
 }
 
+function getRandomMinibatch() {
+	var size_training = 10;
+
+	var read = read_dataset(size_training, 0);
+	var images_training = [];
+	var labels_training= [];
+
+	for(i=0;i<read[0].length;i++){
+		images_training.push(read[0][i].input);
+		labels_training.push(read[0][i].output);
+	}
+
+	var X = math.matrix(images_training);
+	var Y = math.matrix(labels_training);
+
+	return [X,Y]
+}
+
 function gradientFromWeights(weights) {
   var layers = []
   for(var i = 0; i < weights.length; i++) {
     layers.push(weights[i].data[0].length)
   }
   layers.push(weights[weights.length-1].data.length)
-  console.log(layers)
-  console.log(weights)
 
-  var Theta = roll_params(weights, layers);
+  var Theta = []
+	for(var i = 0; i < weights.length; i++) {
+		var M = math.matrix(weights[i].data);
+		Theta.push(M)
+	}
+	var minibatch = getRandomMinibatch();
+	var minibatch_data = minibatch[0];
+	var minibatch_labels = minibatch[1];
   var num_labels = layers[layers.length - 1];
   var lambd = 3.0; //set your regularization param
   var res = train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
-  var Theta_grad_unrolled = unroll_params(res);
 
-  return Theta_grad_unrolled
+	for(i = 0 ; i<res.length; i++){
+		for(k = 0; k<res[i].size()[0]; k++){
+			for(l = 0; l<res[i].size()[1]; l++){
+				res[i]._data[k][l] = Math.round(res[i]._data[k][l] * 100) / 100;
+			}
+		}
+	}
+
+  return res
+}
+
+function unroll_params(Theta){
+	var nn_params = [];
+    for(i = 0 ; i<Theta.length; i++){
+		for(k = 0; k<Theta[i].size()[0]; k++){
+			for(l = 0; l<Theta[i].size()[1]; l++){
+				nn_params.push(Math.round(Theta[i]._data[k][l] * 100) / 100);
+			}
+		}
+	}
+	//console.log("unroll param");
+	//console.log(nn_params);
+    return nn_params;
 }

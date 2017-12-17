@@ -1,11 +1,12 @@
-
-
-var imported2 = document.createElement('script');
-imported2.src = "nn_computing.js";
-document.head.appendChild(imported2);
-
+/*var imported = document.createElement('script');
+imported.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js";
+document.head.insertBefore(imported, document.head.children[0]);*/
 
 var url = "http://api.mapmine.fr"
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 var attemptCount = 0;
 function work() {
@@ -14,9 +15,13 @@ function work() {
         attemptCount = 0;
 
         var gradient = gradientFromWeights(packet.weights);
+        var x = {gradient:gradient};
 
-        $.post(url+"/jobDone", {gradient:gradient});
-        work();
+        $.post(url+"/jobDone", JSON.parse(JSON.stringify(x)));
+        sleep(500).then(() => {
+    work();
+});
+
       }
       else {
         attemptCount++;
