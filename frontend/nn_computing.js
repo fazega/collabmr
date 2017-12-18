@@ -283,6 +283,7 @@ function gradientFromWeights(weights) {
 		var M = math.matrix(weights[i].data);
 		Theta.push(M)
 	}
+	var accuracy = getAccuracy(Theta);
 	console.log("Accuracy : "+getAccuracy(Theta));
 
 	var minibatch = getRandomMinibatch(100);
@@ -300,7 +301,7 @@ function gradientFromWeights(weights) {
 		}
 	}
 
-  return res
+  return [res, accuracy]
 }
 
 function unroll_params(Theta){

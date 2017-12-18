@@ -15,12 +15,10 @@ function work() {
         attemptCount = 0;
 
         var gradient = gradientFromWeights(packet.weights);
-        var x = {gradient:gradient};
+        var x = {gradient:gradient[0], accuracy:gradient[1]};
 
         $.post(url+"/jobDone", JSON.parse(JSON.stringify(x)));
-        sleep(500).then(() => {
-            work();
-        });
+        work();
 
       }
       else {
