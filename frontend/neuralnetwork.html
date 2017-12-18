@@ -1,59 +1,10 @@
 <!DOCTYPE html>
- <meta charset="UTF-8">
+<meta charset="UTF-8">
 
- <head>
+<head>
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
    <script src="bower_components/mnist/dist/mnist.js"></script>
    <script src="math.min.js"></script>
    <script src="nn_computing.js"></script>
    <script src="work.js"></script>
 </head>
-<body>
-
-
-   <div>
-   <p>hello, welcome to MapMine</p>
-
-   <script language='JavaScript'>
-   ss=0;
-   s=00;
-   m='0'+0;
-   h='0'+0;
-   j=0;
-   window.status = "Chrono "+j+" jour(s) et " +h + ' : '  + m + ' : ' + s ;
-   function Chrono() {
-   if (m==0) {m='00'}
-   if(h==0) {h='00'}
-   if (ss<10){ss='0'+ss;}
-   if (s<10){s='0'+s;}
-    window.status = "Chrono "+j+" jour(s) et " +h + ' : '  + m + ' : ' + s ;
-   document.formu.heure.value =j+" jour(s) et "+h + ' : ' + m + ' : ' + s ;
-   document.formu.seco.value =ss;
-   s++;
-   ss++;
-   if (h==24){h='0'+0;j++;}
-   if (s==60){s=0;s=0; m++;if(m<10){m='0'+m;}}
-   if (m==60){m='0'+0;h++;if(h<10){h='0'+h;}}
-   chrono=window.setTimeout("Chrono();",1000);
-   }
-   </script>
-   </div>
-   <form action="" method="post" name="formu" id="formu">
-     <p align="center">
-       <input name="heure" type="text" id="heure" value="0 jour(s) et 00 : 00 : 00"> ou    <input name="seco" type="text"  value="00"> seconde(s).
-     </p>
-     <p align="center">
-       <input type="button" name="Submit" value="Start!" onClick="Chrono();">
-       <input type="button" name="Submit2" value="Stop!" onClick="window.clearTimeout(chrono);">
-       <input type="button" name="Submit3" value="RAZ"onClick="if (confirm('Souhaitez vous mettre le compteur à zéro?')){s=0;m=0;j=0;h=0;ss=0; window.status = 'Chrono 0 jour(s) et 00 : 00 : 00' ; document.formu.heure.value ='0 jour(s) et 00 : 00 : 00';document.formu.seco.value='0'+0;}">
-     </p>
-     <p align="center"><br>
-       La Valeur du chrono apparaît dans la zone de texte et dans la barre de navigation
-       en bas de votre fenêtre. <br>
-       Cliquez sur le bouton Start pour faire partir le chrono, le bouton stop pour
-       l'arrêter et le bouton RAZ pour remettre à zéro</p>
-     <p align="center">.
-
-     </p>
-   </form>
- </div></body>
