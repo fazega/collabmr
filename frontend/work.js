@@ -8,6 +8,8 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
+
 var attemptCount = 0;
 function work() {
     $.get( url+"/work", function( packet ) {
@@ -15,7 +17,7 @@ function work() {
         attemptCount = 0;
 
         var gradient = gradientFromWeights(packet.weights);
-        var x = {gradient:gradient[0], accuracy:gradient[1]};
+        var x = {gradient:gradient[0], cost:gradient[1], accuracy:gradient[2]};
 
         $.post(url+"/jobDone", JSON.parse(JSON.stringify(x)));
         work();

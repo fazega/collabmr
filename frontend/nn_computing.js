@@ -213,7 +213,7 @@ function backwards2(Theta, layers, X, y, num_labels, lambd){
 	console.log("Cost J = ");
 	console.log(J);
 
-    return Theta_grad;
+    return [Theta_grad, J];
 
 }
 
@@ -234,9 +234,11 @@ function train(nb_epochs,eta,Theta,layers,X,y,num_labels,lambd,early_stopping){
 
 function train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd){
 
-	var Theta_grad;
-	Theta_grad = backwards2(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
-	return Theta_grad;
+	var Theta_grad, cost;
+	var b = backwards2(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
+	Theta_grad = b[0];
+	cost = b[1];
+	return [Theta_grad, cost];
 }
 
 function getRandomMinibatch(size_training) {
@@ -293,15 +295,18 @@ function gradientFromWeights(weights) {
   var lambd = 3.0; //set your regularization param
   var res = train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
 
-	for(i = 0 ; i<res.length; i++){
-		for(k = 0; k<res[i].size()[0]; k++){
-			for(l = 0; l<res[i].size()[1]; l++){
-				res[i]._data[k][l] = Math.round(res[i]._data[k][l] * 100) / 100;
+	var grad = res[0];
+	var cost = res[1];
+
+	for(i = 0 ; i<grad.length; i++){
+		for(k = 0; k<grad[i].size()[0]; k++){
+			for(l = 0; l<grad[i].size()[1]; l++){
+				grad[i]._data[k][l] = Math.round(grad[i]._data[k][l] * 100) / 100;
 			}
 		}
 	}
 
-  return [res, accuracy]
+  return [grad, cost, accuracy]
 }
 
 function unroll_params(Theta){
