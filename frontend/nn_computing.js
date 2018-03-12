@@ -257,7 +257,7 @@ function getRandomMinibatch(size_training) {
 	return [X,Y]
 }
 
-function getAccuracy(weights) {
+/*function getAccuracy(weights,data) {
 	var minibatch = getRandomMinibatch(100);
 	var minibatch_data = minibatch[0];
 	var minibatch_labels = minibatch[1];
@@ -271,9 +271,9 @@ function getAccuracy(weights) {
 		}
 	}
 	return accuracy;
-}
+}*/
 
-function gradientFromWeights(weights) {
+function gradientFromWeights(weights, data) {
   var layers = []
   for(var i = 0; i < weights.length; i++) {
     layers.push(weights[i].data[0].length)
@@ -285,15 +285,12 @@ function gradientFromWeights(weights) {
 		var M = math.matrix(weights[i].data);
 		Theta.push(M)
 	}
-	var accuracy = getAccuracy(Theta);
-	console.log("Accuracy : "+getAccuracy(Theta));
 
-	var minibatch = getRandomMinibatch(100);
-	var minibatch_data = minibatch[0];
-	var minibatch_labels = minibatch[1];
-  var num_labels = layers[layers.length - 1];
+  var size_out = layers[layers.length-1]
+	var inputs = data.map((x)=>x.slice(0,x.length-size_out));
+  var outputs = data.map((x)=>x.slice(x.length-size_out,x.length));
   var lambd = 3.0; //set your regularization param
-  var res = train_asynchrone(Theta,layers,minibatch_data,minibatch_labels,num_labels,lambd);
+  var res = train_asynchrone(Theta,layers,math.matrix(inputs),math.matrix(outputs),size_out,lambd);
 
 	var grad = res[0];
 	var cost = res[1];
@@ -306,7 +303,7 @@ function gradientFromWeights(weights) {
 		}
 	}
 
-  return [grad, cost, accuracy]
+  return [grad, cost]
 }
 
 function unroll_params(Theta){
