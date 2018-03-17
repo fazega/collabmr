@@ -6,10 +6,6 @@ var imported2 = document.createElement('script');
 imported2.src = "bower_components/mnist/dist/mnist.js";
 document.head.insertBefore(imported2, document.head.children[0]);*/
 
-
-
-
-
 function read_dataset(size_training, size_testing){
 	var total = size_training + size_testing;
 	if(total > 10000){
@@ -22,34 +18,35 @@ function read_dataset(size_training, size_testing){
 	return [trainingSet, testSet];
 }
 
-
-
+// predict n'est utilisee que par le serveur, qui peut donc encrypter et decrypter a sa guise
+// X est un array d'encryptedVector (les encryptions de chaque exemple)
 function predict(ThetaRes, X){
     var m = X.size()[0];
     var num_labels = ThetaRes[ThetaRes.length-1].size()[0];
     var num_layers = ThetaRes.length + 1;
-
-
     var p = [];
 
     for(k=0;k<m;k++){
-        var h=math.matrix(X._data[k]);
+		// h est un encryptedVector
+        var h = X._data[k];
         for(index=0;index<(num_layers-1);index++){
-            h=sigmoid(math.multiply(ThetaRes[index],math.matrix([1].concat(h._data))));
+			h.enc = math.concat(new encryptedVector(math.matrix([1])).enc,h.enc);
+			h = matrixMult(ThetaRes[index],h).sigmoid();
 		}
-		var max = math.max(h);
+		var act = decrypt_vec(h)
+		var max = math.max(act);
 
 		for(j=0; j<h.size()[0];j++){
-			if(h._data[j] == max){
+			if(act._data[j] == max){
 				p.push(j);
 			}
 		}
-
 	}
 	return p;
 }
-function randInitializeWeights(layers){
 
+// fonction appelée par le serveur au tout début
+function randInitializeWeights(layers){
     var num_of_layers = layers.length;
     var epsilon = 0.12;
     var Theta = []
@@ -67,8 +64,8 @@ function randInitializeWeights(layers){
         Theta.push(W)
     }
     return Theta;
-
 }
+
 
 function roll_params(nn_params, layers){
 
@@ -82,7 +79,6 @@ function roll_params(nn_params, layers){
 		index = index + step;
 		Theta.push(weights);
 	}
-
 	return Theta;
 }
 
@@ -95,106 +91,78 @@ function unroll_params(Theta){
 			}
 		}
 	}
-	//console.log("unroll param");
-	//console.log(nn_params);
     return nn_params;
 }
 
-function sigmoidGradient(z){
-	//console.log("gradient");
-	//console.log(z);
-	var n = z.size()[0];
-	var g = sigmoid(z);
-	for(j = 0; j<n; j++){
-		g._data[j] = g._data[j]*(1-g._data[j]);
-	}
-	return g;
-}
-
-function sigmoid(z){
-	var n = z.size()[0];
-    var g = math.zeros(n);
-	for(j = 0; j<n; j++){
-		g._data[j] = (1.0)/(1.0+math.exp(-z._data[j]));
-	}
-    return g;
-	}
-
+// X est un array d'encryptedVector, y aussi (les encryptions de chaque exemple et de chaque label)
 function backwards2(Theta, layers, X, y, num_labels, lambd){
-
     var m = X.size()[0];
     var num_layers = layers.length;
 	var Theta_grad = [];
 	var J = 0;
-	for(i=0;i<Theta.length;i++){
-		Theta_grad.push(math.zeros(Theta[i].size()));
-	}
-
-    //console.log("debug back Theta");
-	//console.log(Theta);
 
     // In this point implement the backpropagation algorithm
     for(i=0;i<m;i++){
+		// A et Z sont des listes d'encryptedVector (pre-activations et activations)
 	    A = [];
         Z = [];
         A.push(X._data[i]);
-        Z.push([0]);
+        Z.push(new encryptedVector(math.matrix([0])));
         for(j=0;j<num_layers-1;j++){
-			Z.push(math.multiply(Theta[j],math.matrix([1].concat(A[j]))));
-			//console.log("Xi");
-			//console.log(X._data[i]);
-            A.push(sigmoid(Z[j+1])._data);
+			var h = new encryptedVector(math.matrix([1]));
+			h.enc = math.matrix(h.enc._data.concat(A[j].enc._data));
+			Z.push(matrixMult(Theta[j],h));
+            A.push(Z[j+1].sigmoid());
 		}
 
 		// Cost computation for each training example (without regularization)
+		/*
 		for(k=0;k<num_labels;k++){
-
             J += (-1)*y._data[i][k]*math.log(A[A.length-1][k])-(1-y._data[i][k])*math.log(1-A[A.length-1][k]);
 		}
+		*/
 
         var D = [];
 		temp = [];
 		for(k=0; k<num_labels;k++){
-			temp.push(A[A.length-1][k]-y._data[i][k]);
+			temp.push(A[A.length-1].get(k).add(y._data[i].get(k).times(-1)));
 		}
         D.push(temp);
         var j=num_layers-2;
         while(j>0){
 			var temp1 = math.subset(Theta[j],math.index(math.range(0,Theta[j].size()[0]),math.range(1,Theta[j].size()[1])));
-		    var tempList = math.multiply(math.transpose(temp1),math.matrix(D[0]));
-			var sig =sigmoidGradient(Z[j])._data;
-			for(k=0; k<tempList.size()[0];k++){
-				tempList._data[k] *= sig[k];
-			}
-			D=[tempList._data].concat(D);
+			var tempList = matrixMult(math.transpose(temp1),D[0]);
+			var sig = Z[j].sigmoid_grad();
+			tempList = tempList.multiply(sig);
+			D=[tempList].concat(D);
 			j--;
 		}
 
         for(l=0;l<Theta_grad.length;l++){
-			for(n =0; n<D[l].length;n++){
-				D[l][n]*=1.0/m;
+			D[l] = D[l].times(1.0/n);
+			A[l].enc = math.concat(new encryptedVector(math.matrix([1])),A[l].enc);
+			var resT = [];
+			// resT est une liste de lignes qui sont des encryptedVec (equivalent d'une encryptedMatrix)
+			for(var j = 0; j < A[l].enc._data.length; j++){
+				resT.push(D[l].timesEnc(A[l].get(j)));
 			}
-			var  temp1 =math.transpose(math.matrix([D[l]]));
-			//console.log(temp1);
-			var temp2 =math.matrix([[1].concat(A[l])]);
-			//console.log(temp2);
-			var temp3 = math.multiply(temp1,temp2);
-			//console.log(Theta_grad[l],temp3);
-		    Theta_grad[l] = math.add(Theta_grad[l],temp3);
+			Theta_grad.push(resT);
 		}
 
 	}
 
-    //regularization
-
-    for(i = 0; i<num_layers - 1; i++){
+    //regularization : faite en cryptant les poids, puis add avec theta_grad deja crypte
+    for(var i = 0; i<num_layers - 1; i++){
 		var temp_matrix = Theta[i];
-		for(j = 0; j< Theta[i].size()[0]; j++){
+		for(var j = 0; j< Theta[i].size()[0]; j++){
 			temp_matrix._data[j][0] = 0;
 		}
-		Theta_grad[i] = math.add(Theta_grad[i],math.multiply((lambd/m),temp_matrix));
+		for(var k = 0; k < Theta_grad[i].length; k++){
+			Theta_grad[i][k] = Theta_grad[i][k].add(new encryptedVector(math.matrix(temp_matrix._data[k])).times(lambd/m));
+		}
 	}
 
+	/*
 	// Cost regularization
 	J*=(1.0/m);
     var JR=0;
@@ -212,6 +180,7 @@ function backwards2(Theta, layers, X, y, num_labels, lambd){
 
 	console.log("Cost J = ");
 	console.log(J);
+	*/
 
     return [Theta_grad, J];
 
@@ -287,8 +256,11 @@ function gradientFromWeights(weights, data) {
 	}
 
   var size_out = layers[layers.length-1]
-	var inputs = data.map((x)=>x.slice(0,x.length-size_out));
-  var outputs = data.map((x)=>x.slice(x.length-size_out,x.length));
+  console.log(data);
+	var inputs = data.map((x)=>{let v = new encryptedVector();v.enc = math.matrix(x.enc._data.slice(0,x.enc._data.length-size_out));return v;});
+  var outputs = data.map((x)=>{let v = new encryptedVector();v.enc = math.matrix(x.enc._data.slice(x.enc._data.length-size_out,x.enc._data.length));return v;});
+  console.log(inputs)
+  console.log(outputs)
   var lambd = 3.0; //set your regularization param
   var res = train_asynchrone(Theta,layers,math.matrix(inputs),math.matrix(outputs),size_out,lambd);
 
